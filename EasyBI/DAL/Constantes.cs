@@ -24,6 +24,7 @@ namespace EasyBI
 
 		public static String mongoDataBase = "EASYBI";
 
+
 		public static String mongoExtractionCollection = "EXTRACTION";
 
 		public static String mongoTableCollection = "TABLE";
