@@ -271,6 +271,8 @@ namespace EasyBI.DAL.OBJECTS
 		}
 		public static Column GetColumn(Column column, string field)
 		{
+			field = field.Replace("\"", "");
+
 			if (column.maxLength < field.Length)
 			{
 				column.maxLength = field.Length;
@@ -329,7 +331,7 @@ namespace EasyBI.DAL.OBJECTS
 				int count = 0;
 				foreach (string field in firstLine.Split(del, StringSplitOptions.None))
 				{
-					columns.Add(new Column(field, count));
+					columns.Add(new Column(field.Replace("\"",""), count));
 					count++;
 				}
 			}

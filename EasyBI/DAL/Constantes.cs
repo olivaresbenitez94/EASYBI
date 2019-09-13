@@ -22,7 +22,7 @@ namespace EasyBI
 
 		public static String pythonExeEnvironment = @"C:\Users\oliva\Anaconda3\python.exe";
 
-		public static String mongoDataBase = "EASIBI";
+		public static String mongoDataBase = "EASYBI";
 
 		public static String mongoExtractionCollection = "EXTRACTION";
 
