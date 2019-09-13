@@ -142,7 +142,7 @@
 			this.tbpExtraccion.Padding = new System.Windows.Forms.Padding(2);
 			this.tbpExtraccion.Size = new System.Drawing.Size(1066, 726);
 			this.tbpExtraccion.TabIndex = 0;
-			this.tbpExtraccion.Text = "Extracción";
+			this.tbpExtraccion.Text = "Extractions";
 			this.tbpExtraccion.UseVisualStyleBackColor = true;
 			// 
 			// spcExtraction
@@ -430,7 +430,7 @@
 			this.tbpTablas.Padding = new System.Windows.Forms.Padding(2);
 			this.tbpTablas.Size = new System.Drawing.Size(1066, 726);
 			this.tbpTablas.TabIndex = 1;
-			this.tbpTablas.Text = "Tablas";
+			this.tbpTablas.Text = "Tables";
 			this.tbpTablas.UseVisualStyleBackColor = true;
 			// 
 			// spcAllTables

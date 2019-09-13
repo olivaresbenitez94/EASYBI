@@ -49,7 +49,7 @@ namespace EasyBI.DAL.OBJECTS
         #endregion
 
         #region métodos
-        public static int getUserID(string userName)
+        public static int GetUserID(string userName)
         {
             string where = "NAME = @userName AND ACTIVE = 1";
 

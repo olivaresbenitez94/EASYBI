@@ -11,6 +11,7 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -23,7 +24,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -129,12 +129,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DAL\ComparacionPREPRO.cs" />
     <Compile Include="DAL\Constantes.cs" />
     <Compile Include="DAL\DataAccessSql.cs" />
     <Compile Include="DAL\DBOMongo.cs" />
     <Compile Include="DAL\DBOSql.cs" />
-    <Compile Include="DAL\Environment.cs" />
     <Compile Include="DAL\FORMS\frmExtraction.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -159,16 +157,14 @@
     <Compile Include="DAL\FORMS\frmWindowFolder.Designer.cs">
       <DependentUpon>frmWindowFolder.cs</DependentUpon>
     </Compile>
-    <Compile Include="DAL\GeneracionSQLScript.cs" />
     <Compile Include="DAL\log.cs" />
     <Compile Include="DAL\OBJECTS\Extraction.cs" />
     <Compile Include="DAL\OBJECTS\Folders.cs" />
     <Compile Include="DAL\OBJECTS\Table.cs" />
     <Compile Include="DAL\OBJECTS\Users.cs" />
     <Compile Include="DAL\Parser.cs" />
-    <Compile Include="DAL\PYTHON\Python.cs" />
-    <Compile Include="DAL\Utiles.cs" />
     <Compile Include="EasyBI\tabExtraction.cs" />
+    <Compile Include="EasyBI\tabTable.cs" />
     <Compile Include="MainMenuEasyBI.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -224,12 +220,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\images.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="DAL\PYTHON\JSONtoCSV.py">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <None Include="Resources\JSONtoCSV.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

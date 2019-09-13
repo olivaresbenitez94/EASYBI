@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace EasyBI.DAL.OBJECTS
-{ // en la version local no se usa
+{ 
     public class Folders : DBOSql
     {
         #region Propiedades
@@ -86,7 +86,7 @@ namespace EasyBI.DAL.OBJECTS
 
         #region Métodos
 
-        public bool createFolder(int? parent, string name)
+        public bool CreateFolder(int? parent, string name)
         {
             return new Folders
             {
@@ -94,18 +94,18 @@ namespace EasyBI.DAL.OBJECTS
                 NAME = name,
                 ACTIVE = true,
                 CREATED_DATE = DateTime.UtcNow,
-                USER_ID = Users.getUserID(System.Security.Principal.WindowsIdentity.GetCurrent().Name)
+                USER_ID = Users.GetUserID(System.Security.Principal.WindowsIdentity.GetCurrent().Name)
             }.Insertar();
         }
 
-        public void createFolder(string name)
+        public void CreateFolder(string name)
         {
-             createFolder(null, name);
+             CreateFolder(null, name);
         }
 
-        public static List<Folders> getFolders()
+        public static List<Folders> GetFolders()
         {
-            int USER_ID = Users.getUserID(Environment.UserName);
+            int USER_ID = Users.GetUserID(Environment.UserName);
             string where = " USER_ID = @userID ";
 
             List<SqlParameter> param = new List<SqlParameter>();
@@ -114,7 +114,7 @@ namespace EasyBI.DAL.OBJECTS
             return Folders.getAll<Folders>(where, param).OrderBy(fold => fold.NAME).ToList();
         }
 
-        public static bool deleteFolders(List<int> ids) 
+        public static bool DeleteFolders(List<int> ids) 
         {
             bool result = true;
 

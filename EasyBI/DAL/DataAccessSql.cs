@@ -131,7 +131,7 @@ namespace EasyBI
         public static int ExecuteNonQuery(string commandText)
         {
             //pass through the call providing null for the set of SqlParameters
-            return ExecuteNonQuery(Constantes.CONNECTIONSTRING, CommandType.Text, commandText, (SqlParameter[])null);
+            return ExecuteNonQuery(Constantes.sqlConnectionString, CommandType.Text, commandText, (SqlParameter[])null);
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace EasyBI
         public static int ExecuteNonQuery(string commandText, SqlParameter[] param)
         {
             //pass through the call providing null for the set of SqlParameters
-            return ExecuteNonQuery(Constantes.CONNECTIONSTRING, CommandType.Text, commandText, param);
+            return ExecuteNonQuery(Constantes.sqlConnectionString, CommandType.Text, commandText, param);
         }
         /// <summary>
         /// Execute a SqlCommand (that returns no resultset and takes no parameters) against the database specified in 
@@ -437,7 +437,7 @@ namespace EasyBI
         public static DataTable ExecuteDataTable(string commandText)
         {
             //pass through the call providing null for the set of SqlParameters
-            return ExecuteDataTable(Constantes.CONNECTIONSTRING, CommandType.Text, commandText, (SqlParameter[])null);
+            return ExecuteDataTable(Constantes.sqlConnectionString, CommandType.Text, commandText, (SqlParameter[])null);
         }
 
         /// <summary>
@@ -452,7 +452,7 @@ namespace EasyBI
         public static DataTable ExecuteDataTable(string commandText, SqlParameter[] parameterValues)
         {
             //pass through the call providing null for the set of SqlParameters
-            return ExecuteDataTable(Constantes.CONNECTIONSTRING, CommandType.Text, commandText, parameterValues);
+            return ExecuteDataTable(Constantes.sqlConnectionString, CommandType.Text, commandText, parameterValues);
         }
 
         /// <summary>
@@ -1073,7 +1073,7 @@ namespace EasyBI
         public static object ExecuteScalar(string commandText)
         {
             //pass through the call providing null for the set of SqlParameters
-            return ExecuteScalar(Constantes.CONNECTIONSTRING, CommandType.Text, commandText, (SqlParameter[])null);
+            return ExecuteScalar(Constantes.sqlConnectionString, CommandType.Text, commandText, (SqlParameter[])null);
         }
 
         /// <summary>
@@ -1089,7 +1089,7 @@ namespace EasyBI
         public static object ExecuteScalar(string commandText, SqlParameter[] param)
         {
             //pass through the call providing null for the set of SqlParameters
-            return ExecuteScalar(Constantes.CONNECTIONSTRING, CommandType.Text, commandText, param);
+            return ExecuteScalar(Constantes.sqlConnectionString, CommandType.Text, commandText, param);
         }
         /// <summary>
         /// Execute a SqlCommand (that returns a 1x1 resultset and takes no parameters) against the database specified in 

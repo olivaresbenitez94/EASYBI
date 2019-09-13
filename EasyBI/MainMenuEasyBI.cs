@@ -15,6 +15,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Forms;
 using Table = EasyBI.DAL.OBJECTS.Table;
+using EasyBI.DAL;
 
 namespace EasyBI
 {
@@ -38,13 +39,11 @@ namespace EasyBI
 
 		public frmEasyBI()
 		{
-			Extraction.usePython();
 			InitializeComponent();
 			folderAppPath = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
 			InitializeViewExtraction();
 			InitizalizeTableGrid();
 			InitializeApp();
-
 		}
 
 		#region Eventos
@@ -70,7 +69,7 @@ namespace EasyBI
 
 			if (MessageBox.Show("Do you want to continue?", "Question", MessageBoxButtons.YesNo) == DialogResult.Yes)
 			{
-				if (Folders.deleteFolders(IDs))
+				if (Folders.DeleteFolders(IDs))
 				{
 					Extraction.DeleteFolders(IDs, extractions);
 
@@ -97,66 +96,6 @@ namespace EasyBI
 
 		}
 
-		#endregion
-
-		#endregion
-
-		#region Métodos
-		#region Extracción
-
-		private void loadTree()
-		{
-			List<Folders> folders = Folders.getFolders();
-			tvExtraccion.Nodes.Clear();
-			tvExtractionTable.Nodes.Clear();
-
-			foreach (Folders fold in folders.Where(obj => obj.PARENT_ID == 0))
-			{
-				List<TreeNode> nodesExtraction = tabExtraction.GetTreeNodes(fold, folders);
-				List<TreeNode> nodesTables = tabExtraction.GetTreeNodes(fold, folders);
-				tvExtraccion.Nodes.AddRange(nodesExtraction.ToArray());
-
-				tvExtractionTable.Nodes.AddRange(nodesTables.ToArray());
-
-			}
-			rootFolder = folders.Where(folder => Parser.toInt(folder.PARENT_ID) == 0)?.Select(folder => folder.ID).FirstOrDefault() ?? -1;
-			tvExtraccion.ExpandAll();
-			tvExtractionTable.ExpandAll();
-
-		}
-
-		private void loadExtractions()
-		{
-			extractions = Extraction.getAllDocuments();
-		}
-
-		private void InitializeApp()
-		{
-			loadExtractions();
-			loadTables();
-			loadTree();
-		}
-
-		#endregion
-
-		#endregion
-		private void InitializeViewExtraction()
-		{
-			dgvExtraction.DataSource = null;
-			btnDeleteExtraction.Visible = false;
-			txtDate.Text = "";
-			txtColumns.Text = "";
-			txtName.Text = "";
-			txtFolder.Text = "";
-			txtRegisters.Text = "";
-
-			txtDate.Enabled = false;
-			txtColumns.Enabled = false;
-			txtName.Enabled = false;
-			txtFolder.Enabled = false;
-			txtRegisters.Enabled = false;
-		}
-
 		private void TvExtraccion_AfterSelect(object sender, TreeViewEventArgs e)
 		{
 			string text = e.Node.Text.ToString();
@@ -175,70 +114,12 @@ namespace EasyBI
 			loadExtractions(index);
 		}
 
-		private void loadExtractions(int index)
-		{
-			InitializeViewExtraction();
-			Extraction ext = null;
-			try
-			{
-				ext = extractions.Where(e => e.metadata.folder == folderExtractionTab).ToList().OrderBy(e => e.metadata.name)?.ToArray()[index] ?? null;
-
-			}
-			catch
-			{
-
-			}
-
-
-			dgvExtraction.DataSource = ExtractionToTable(ext);
-
-			if (ext != null)
-			{
-				btnDeleteExtraction.Visible = true;
-				txtDate.Text = ext.metadata.createDate.ToString("dddd, dd MMMM yyyy HH:mm:ss");
-				txtColumns.Text = ext.Columns.Count.ToString();
-				txtName.Text = ext.metadata.name;
-				List<Folders> FOLDS = Folders.getFolders();
-				Folders fold = Folders.getFolders()?.Where(f => f.ID == ext.metadata.folder).FirstOrDefault();
-				txtFolder.Text = Folders.getFolders()?.Where(f => f.ID == ext.metadata.folder).FirstOrDefault()?.NAME ?? "-1";
-				txtRegisters.Text = String.Format("{0:n0}", ext.metadata.registers);
-			}
-
-			selectdExtraction = ext;
-
-		}
-
-		public static DataTable ExtractionToTable(Extraction extraction)
-		{
-			DataTable table = new DataTable();
-
-			table.Columns.Add(new DataColumn("Index", typeof(int)));
-			table.Columns.Add(new DataColumn("Name", typeof(string)));
-			table.Columns.Add(new DataColumn("MinLenght", typeof(int)));
-			table.Columns.Add(new DataColumn("MaxLenght", typeof(int)));
-			table.Columns.Add(new DataColumn("Type", typeof(string)));
-
-			foreach (Extraction.Column col in extraction.Columns)
-			{
-				DataRow row = table.NewRow();
-				row["Index"] = Parser.toInt(col.position);
-				row["Name"] = col.name;
-				row["MinLenght"] = Parser.toInt(col.minLength);
-				row["MaxLenght"] = Parser.toInt(col.maxLength);
-				row["Type"] = col.inferedType.ToString();
-
-				table.Rows.Add(row);
-			}
-
-			return table;
-		}
-
 		private void BtnDeleteExtraction_Click(object sender, EventArgs e)
 		{
 			if (MessageBox.Show("Do you want to continue?", "Question", MessageBoxButtons.YesNo) == DialogResult.Yes)
 			{
 
-				Extraction.DeleteObject(selectdExtraction._id);
+				DAL.DBOMongo.DeleteObject(selectdExtraction._id, Constantes.mongoExtractionCollection, Constantes.mongoConnectionString, Constantes.mongoDataBase);
 
 				extractions.Remove(extractions.Where(ext => ext._id == selectdExtraction._id).FirstOrDefault());
 				InitializeViewExtraction();
@@ -260,28 +141,6 @@ namespace EasyBI
 			lbtExtractionsTable.DataSource = extractions.Where(ext => ext.metadata.folder.ToString() == tag).Select(ext => ext.metadata.name).OrderBy(ext => ext).ToList();
 
 			InitizalizeTableGrid();
-		}
-
-		public Extraction getExtraction(int index, int folder, List<Extraction> extractions)
-		{
-			Extraction extraction = null;
-			try
-			{
-				extraction = extractions.Where(ext => ext.metadata.folder == folder).
-					ToList().OrderBy(ext => ext.metadata.name)?.ToArray()[index] ?? null;
-
-			}
-			catch
-			{
-
-			}
-			return extraction;
-		}
-
-		public Table GetTable(int index, ObjectId extraction, List<Table> tables)
-		{
-			return tables.Where(table => table.metadata.extraction == extraction).
-				OrderBy(table => table.metadata.name)?.ToArray()[index] ?? null;
 		}
 
 		private void BtnCreateFromExtraction_Click(object sender, EventArgs e)
@@ -337,11 +196,11 @@ namespace EasyBI
 			InitizalizeTableGrid();
 		}
 
-		private void loadTablesCombo(ObjectId extractionID, int folderTable)
-		{
-			lbtTables.DataSource = tables.Where(ext => ext.metadata.folder.ToString() == folderTable.ToString() && ext.metadata.extraction == extractionID).
-				Select(ext => ext.metadata.name).OrderBy(ext => ext).ToList();
-		}
+		#endregion
+
+
+		#region EventosTable
+
 		private void BtnSave_Click(object sender, EventArgs e)
 		{
 			DataGridView grid = null;
@@ -356,9 +215,9 @@ namespace EasyBI
 
 				}
 
-				Table table = Table.GridToTable(grid, txtTableName.Text, Parser.toInt(folderTableTab), selectedExtractionTable._id, Users.getUserID(Environment.UserName), loadedTable);
+				Table table = Table.GridToTable(grid, txtTableName.Text, Parser.toInt(folderTableTab), selectedExtractionTable._id, Users.GetUserID(Environment.UserName), loadedTable);
 
-				string objectIdNull = "000000000000000000000000" ;
+				string objectIdNull = "000000000000000000000000";
 
 				if (table._id.ToString() != objectIdNull)
 				{
@@ -367,8 +226,8 @@ namespace EasyBI
 				else
 				{
 					Table.InsertTable(table);
+
 				}
-				
 
 				tables.Where(t => t.metadata.extraction == table.metadata.extraction).Select(t => t).ToList().ForEach(t => tables.Remove(t));
 
@@ -376,8 +235,9 @@ namespace EasyBI
 				tables.AddRange(updatedTables);
 
 				loadedTable = updatedTables.OrderByDescending(t => t.metadata.modifiedDate).LastOrDefault();
-				
+
 				txtCreateDate.Text = loadedTable.metadata.createDate.ToString("dd/MM/yyyy hh:mm:ss");
+
 
 				loadTablesCombo(selectedExtractionTable._id, Parser.toInt(folderTableTab));
 
@@ -387,7 +247,7 @@ namespace EasyBI
 
 		private void LbtTables_DoubleClick(object sender, EventArgs e)
 		{
-			if(pTableAll.Controls.Count > 0)
+			if (pTableAll.Controls.Count > 0)
 			{
 				if (MessageBox.Show("Do you want to continue? You will lose your progress if you don't save.", "Question", MessageBoxButtons.YesNo) == DialogResult.No)
 				{
@@ -407,7 +267,7 @@ namespace EasyBI
 			dgv.Parent = pTableAll;
 			pTableAll.Controls.Add(dgv);
 			dgv.Dock = DockStyle.Fill;
-			
+
 			dgv.DataSource = Table.TableToDatatable(selectedTable);
 			InitizalizeTableGrid();
 			dgv.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellValidated);
@@ -415,11 +275,34 @@ namespace EasyBI
 			FormatGrid(dgv);
 
 
-	}
+		}
 
-		private void loadTables()
+		private void grid_CellValidated(object sender, DataGridViewCellEventArgs e)
 		{
-			tables = Table.getAllDocuments(Users.getUserID(Environment.UserName));
+			if (e.ColumnIndex == 2)
+			{
+				DataGridViewRow row = ((DataGridView)pTableAll.Controls[0]).Rows[e.RowIndex];
+				FormatRow(row);
+			}
+		}
+
+		private void BtnExportToSQL_Click(object sender, EventArgs e)
+		{
+			frmSQL SQL = new frmSQL(selectedTable);
+			SQL.ShowDialog();
+		}
+
+		private void BtnInsertRowDown_Click(object sender, EventArgs e)
+		{
+			if (pTableAll.Controls.Count > 0)
+			{
+				DataGridView grid = (DataGridView)pTableAll.Controls[0];
+
+				if (grid.SelectedRows.Count == 1)
+				{
+					InsertRow(false);
+				}
+			}
 		}
 
 		private void BtnDeleteTable_Click(object sender, EventArgs e)
@@ -439,25 +322,6 @@ namespace EasyBI
 				}
 				InitizalizeTableGrid();
 			}
-		}
-
-		private void InitizalizeTableGrid()
-		{
-			bool existsGrid = (pTableAll.Controls.Count > 0);
-			btnCreateFromExtraction.Visible = (selectedExtractionTable != null) && !existsGrid;
-			btnCreateFromTable.Visible = (selectedTable != null) && !existsGrid;
-			btnCloseTable.Visible = existsGrid;
-
-			btnDeleteTable.Visible = existsGrid;
-			lblTableName.Visible = existsGrid;
-			btnSave.Visible = existsGrid;
-			txtTableName.Visible = existsGrid;
-			btnInsertRowDown.Visible = existsGrid;
-			btnInsertRowUp.Visible = existsGrid;
-			btnDeleteRows.Visible = existsGrid;
-			btnExportToSQL.Visible = existsGrid;
-			lblCreateDate.Visible = existsGrid;
-			txtCreateDate.Visible = existsGrid;
 		}
 
 		private void LbtTables_SelectedIndexChanged(object sender, EventArgs e)
@@ -480,7 +344,7 @@ namespace EasyBI
 		{
 
 			if (MessageBox.Show("Do you want to continue?", "Question", MessageBoxButtons.YesNo) == DialogResult.Yes)
-			{			
+			{
 				DataGridView grid = (DataGridView)pTableAll.Controls[0];
 
 				foreach (DataGridViewRow row in grid.SelectedRows)
@@ -488,6 +352,168 @@ namespace EasyBI
 					grid.Rows.Remove(row);
 				}
 				RecalculatePositions();
+			}
+		}
+
+
+		#endregion
+
+		#endregion
+
+
+		#region Métodos
+
+
+		#region Extracción
+
+		private void loadTree()
+		{
+			List<Folders> folders = Folders.GetFolders();
+			tvExtraccion.Nodes.Clear();
+			tvExtractionTable.Nodes.Clear();
+
+			foreach (Folders fold in folders.Where(obj => obj.PARENT_ID == 0))
+			{
+				List<TreeNode> nodesExtraction = tabExtraction.GetTreeNodes(fold, folders);
+				List<TreeNode> nodesTables = tabExtraction.GetTreeNodes(fold, folders);
+				tvExtraccion.Nodes.AddRange(nodesExtraction.ToArray());
+
+				tvExtractionTable.Nodes.AddRange(nodesTables.ToArray());
+
+			}
+			rootFolder = folders.Where(folder => Parser.toInt(folder.PARENT_ID) == 0)?.Select(folder => folder.ID).FirstOrDefault() ?? -1;
+			tvExtraccion.ExpandAll();
+			tvExtractionTable.ExpandAll();
+
+		}
+
+		private void loadExtractions()
+		{
+			extractions = Extraction.GetAllDocuments();
+		}
+
+		private void InitializeApp()
+		{
+			loadExtractions();
+			loadTables();
+			loadTree();
+		}
+
+		private void InitializeViewExtraction()
+		{
+			dgvExtraction.DataSource = null;
+			btnDeleteExtraction.Visible = false;
+			txtDate.Text = "";
+			txtColumns.Text = "";
+			txtName.Text = "";
+			txtFolder.Text = "";
+			txtRegisters.Text = "";
+
+			txtDate.Enabled = false;
+			txtColumns.Enabled = false;
+			txtName.Enabled = false;
+			txtFolder.Enabled = false;
+			txtRegisters.Enabled = false;
+		}
+
+		private void loadExtractions(int index)
+		{
+			InitializeViewExtraction();
+			Extraction ext = null;
+			try
+			{
+				ext = extractions.Where(e => e.metadata.folder == folderExtractionTab).ToList().OrderBy(e => e.metadata.name)?.ToArray()[index] ?? null;
+
+			}
+			catch
+			{
+
+			}
+
+			dgvExtraction.DataSource = tabTable.ExtractionToTable(ext);
+
+			if (ext != null)
+			{
+				btnDeleteExtraction.Visible = true;
+				txtDate.Text = ext.metadata.createDate.ToString("dddd, dd MMMM yyyy HH:mm:ss");
+				txtColumns.Text = ext.Columns.Count.ToString();
+				txtName.Text = ext.metadata.name;
+				List<Folders> FOLDS = Folders.GetFolders();
+				Folders fold = Folders.GetFolders()?.Where(f => f.ID == ext.metadata.folder).FirstOrDefault();
+				txtFolder.Text = Folders.GetFolders()?.Where(f => f.ID == ext.metadata.folder).FirstOrDefault()?.NAME ?? "-1";
+				txtRegisters.Text = String.Format("{0:n0}", ext.metadata.registers);
+			}
+
+			selectdExtraction = ext;
+
+		}
+
+		public Extraction getExtraction(int index, int folder, List<Extraction> extractions)
+		{
+			Extraction extraction = null;
+			try
+			{
+				extraction = extractions.Where(ext => ext.metadata.folder == folder).
+					ToList().OrderBy(ext => ext.metadata.name)?.ToArray()[index] ?? null;
+
+			}
+			catch
+			{
+
+			}
+			return extraction;
+		}
+
+		public Table GetTable(int index, ObjectId extraction, List<Table> tables)
+		{
+			return tables.Where(table => table.metadata.extraction == extraction).
+				OrderBy(table => table.metadata.name)?.ToArray()[index] ?? null;
+		}
+
+		#endregion
+
+		#region Tablas
+
+		private void loadTablesCombo(ObjectId extractionID, int folderTable)
+		{
+			lbtTables.DataSource = tables.Where(ext => ext.metadata.folder.ToString() == folderTable.ToString() && ext.metadata.extraction == extractionID).
+				Select(ext => ext.metadata.name).OrderBy(ext => ext).ToList();
+		}
+
+		private void loadTables()
+		{
+			tables = Table.getAllDocuments(Users.GetUserID(Environment.UserName));
+		}
+
+		private void InitizalizeTableGrid()
+		{
+			bool existsGrid = (pTableAll.Controls.Count > 0);
+			btnCreateFromExtraction.Visible = (selectedExtractionTable != null) && !existsGrid;
+			btnCreateFromTable.Visible = (selectedTable != null) && !existsGrid;
+			btnCloseTable.Visible = existsGrid;
+
+			btnDeleteTable.Visible = existsGrid;
+			lblTableName.Visible = existsGrid;
+			btnSave.Visible = existsGrid;
+			txtTableName.Visible = existsGrid;
+			btnInsertRowDown.Visible = existsGrid;
+			btnInsertRowUp.Visible = existsGrid;
+			btnDeleteRows.Visible = existsGrid;
+			btnExportToSQL.Visible = existsGrid;
+			lblCreateDate.Visible = existsGrid;
+			txtCreateDate.Visible = existsGrid;
+		}
+
+		private void BtnInsertRowUp_Click(object sender, EventArgs e)
+		{
+			if (pTableAll.Controls.Count > 0)
+			{
+				DataGridView grid = (DataGridView)pTableAll.Controls[0];
+
+				if (grid.SelectedRows.Count == 1)
+				{
+					InsertRow(true);
+				}
 			}
 		}
 
@@ -511,19 +537,6 @@ namespace EasyBI
 			}
 		}
 
-		private void BtnInsertRowUp_Click(object sender, EventArgs e)
-		{
-			if (pTableAll.Controls.Count > 0)
-			{
-				DataGridView grid = (DataGridView)pTableAll.Controls[0];
-
-				if(grid.SelectedRows.Count == 1)
-				{
-					InsertRow(true);
-				}
-			}
-		}
-
 		private void InsertRow(bool up)
 		{
 			DataGridView grid = (DataGridView)pTableAll.Controls[0];
@@ -539,7 +552,7 @@ namespace EasyBI
 			DataTable table = (DataTable)grid.DataSource;
 
 			DataRow datarow = table.NewRow();
-			
+
 			datarow["Type"] = Table.TableColumn.ColumnType.varchar.ToString();
 			datarow["Precision"] = 0;
 			datarow["Length"] = 20;
@@ -557,7 +570,7 @@ namespace EasyBI
 
 			table.Rows.Add(datarow);
 
-			table.DefaultView.Sort= "Position asc, Name asc";
+			table.DefaultView.Sort = "Position asc, Name asc";
 			table = table.DefaultView.ToTable();
 
 			grid.DataSource = table;
@@ -565,19 +578,6 @@ namespace EasyBI
 			grid.Refresh();
 			RecalculatePositions();
 
-		}
-
-		private void BtnInsertRowDown_Click(object sender, EventArgs e)
-		{
-			if (pTableAll.Controls.Count > 0)
-			{
-				DataGridView grid = (DataGridView)pTableAll.Controls[0];
-
-				if (grid.SelectedRows.Count == 1)
-				{
-					InsertRow(false);
-				}
-			}
 		}
 
 		private void FormatGrid(DataGridView grid)
@@ -588,7 +588,7 @@ namespace EasyBI
 			}
 		}
 
-		private void FormatRow(DataGridViewRow row )
+		private void FormatRow(DataGridViewRow row)
 		{
 			List<string> valuesWithLenght = new List<string>
 			{
@@ -599,7 +599,7 @@ namespace EasyBI
 			bool lengthVisible = (valuesWithLenght.Contains(row.Cells["Type"].Value.ToString()));
 
 			row.Cells["Length"].ReadOnly = !lengthVisible;
-			
+
 			if (lengthVisible)
 			{
 				row.Cells["Length"].Style.ForeColor = Color.Black;
@@ -621,22 +621,10 @@ namespace EasyBI
 				row.Cells["Precision"].Style.ForeColor = Color.Transparent;
 			}
 		}
+		#endregion
 
+		#endregion
 		
 
-		private void grid_CellValidated(object sender, DataGridViewCellEventArgs e)
-		{
-			if(e.ColumnIndex == 2)
-			{
-				DataGridViewRow row = ((DataGridView)pTableAll.Controls[0]).Rows[e.RowIndex];
-				FormatRow(row);
-			}
-		}
-
-		private void BtnExportToSQL_Click(object sender, EventArgs e)
-		{
-			frmSQL SQL = new frmSQL(selectedTable);
-			SQL.ShowDialog();
-		}
 	}
 }

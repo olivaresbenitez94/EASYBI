@@ -42,7 +42,7 @@ namespace EasyBI.DAL.FORMS
         {
             List<ComboBoxItem> items = new List<ComboBoxItem>();
 
-			Folders.getFolders().ForEach(obj => items.Add(new ComboBoxItem(obj.NAME, obj.ID)));
+			Folders.GetFolders().ForEach(obj => items.Add(new ComboBoxItem(obj.NAME, obj.ID)));
             
             cmbParentFolder.Items.AddRange(items.Cast<object>().ToArray());
 
@@ -61,7 +61,7 @@ namespace EasyBI.DAL.FORMS
                 new Folders
                 {
                     NAME = txtName.Text,
-                    USER_ID = Users.getUserID(Environment.UserName),
+                    USER_ID = Users.GetUserID(Environment.UserName),
                     PARENT_ID = (int?) ((ComboBoxItem)cmbParentFolder.SelectedItem)?.Value ?? null,
                     ACTIVE = true,
                     CREATED_DATE =  DateTime.UtcNow

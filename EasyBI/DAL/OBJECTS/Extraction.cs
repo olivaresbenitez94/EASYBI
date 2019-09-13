@@ -17,6 +17,7 @@ using Microsoft.Scripting.Hosting;
 using MongoDB.Bson.Serialization;
 using System.Windows.Forms;
 using System.Diagnostics;
+using EasyBI.EasyBI;
 
 namespace EasyBI.DAL.OBJECTS
 {
@@ -71,42 +72,14 @@ namespace EasyBI.DAL.OBJECTS
 			JSON,
 			XML
 		}
+		
 		#endregion
 
-		public static BsonDocument getBsonDocument (Object obj)
+
+		public static string Run_cmd(string args, string cmd, string pythonExeEnvironment)
 		{
-			BsonDocument document = obj.ToBsonDocument();
-			var jsonDocument = document.ToJson();
-			return document;
-		}
-		public static void usePython()
-		{ /*
-			string folder = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
-			ScriptEngine engine = Python.CreateEngine();
-			ICollection<string> paths = engine.GetSearchPaths();
-			//string dir = @"C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python36_64\Lib";
-			//paths.Add(dir);
-			//engine.SetSearchPaths(paths);
-			var theScript = "import sys\nsys.path.append(r'C:\\Users\\oliva\\Downloads\\EasyBI\\EasyBI\\packages\\IronPython.2.7.9\\lib')\nimport json\nprint('This is a message!')";
-
-
-			// execute the script
-			try
-			{
-				engine.Execute(theScript);
-			}
-			catch (Exception ex)
-			{
-
-			}
-			*/
-		}
-
-		public static string run_cmd(string args, string cmd, string FILENAME = @"C:\Users\oliva\Anaconda3\python.exe")
-		{
-			bool result = true;
 			ProcessStartInfo start = new ProcessStartInfo();
-			start.FileName = FILENAME;
+			start.FileName = pythonExeEnvironment;
 			start.Arguments = string.Format("{0} {1}", cmd, args);
 			start.UseShellExecute = false;
 			start.RedirectStandardOutput = true;
@@ -121,79 +94,13 @@ namespace EasyBI.DAL.OBJECTS
 
 		public static string JSONtoCSV(string pyPATH,string sourcePath, string targetPath)
 		{
-			/*
-			ScriptRuntimeSetup setup = Python.CreateRuntimeSetup(null);
-			ScriptRuntime runtime = new ScriptRuntime(setup);
-			ScriptEngine engine = Python.GetEngine(runtime);
-			ICollection<string> paths = engine.GetSearchPaths();
-			string dir = @"C:\Program Files (x86)\Microsoft Visual Studio\Shared\Python36_64\Lib";
-			paths.Add(dir);
-			engine.SetSearchPaths(paths);
-			var theScript = "import sys\nimport json\nprint('This is a message!')";
-
-			ScriptSource source = engine.CreateScriptSourceFromString(theScript);//PYTHON.Python.JSONtoCSVcode()
-
-			ScriptScope scope = engine.CreateScope();
-			List<String> argv = new List<String>();
-			//Do some stuff and fill argv
-			argv.Add(sourcePath);
-			argv.Add(targetPath);
-			engine.GetSysModule().SetVariable("argv", argv);
-			source.Execute(scope);
-			*/
 			List<String> argv = new List<String>();
 			argv.Add(sourcePath);
 			argv.Add(targetPath);
 
-			return run_cmd(string.Join(" ", argv), pyPATH);
+			return Run_cmd(string.Join(" ", argv), pyPATH, Constantes.pythonExeEnvironment);
 		}
-		public static async void InsertAsync(Object obj, string collectionName = "EXTRACTION",string connectionString = "mongodb://localhost:27017"
-			, string databaseName = "EASYBI")
-		{
-			// Create a MongoClient object by using the connection string
-			var client = new MongoClient(connectionString);
-
-			//Use the MongoClient to access the server
-			var database = client.GetDatabase(databaseName);
-			
-			//get mongodb collection
-			var collection = database.GetCollection<BsonDocument>(collectionName);
-
-			await collection.InsertOneAsync(getBsonDocument(obj));
-			
-		}
-
-		public static async void UpdateObject(ObjectId objectId, Object obj, string collectionName = "EXTRACTION", string connectionString = "mongodb://localhost:27017"
-			, string databaseName = "EASYBI")
-		{
-			// Create a MongoClient object by using the connection string
-			var client = new MongoClient(connectionString);
-
-			//Use the MongoClient to access the server
-			var database = client.GetDatabase(databaseName);
-
-			//get mongodb collection
-			var collection = database.GetCollection<BsonDocument>(collectionName);
-			var filter = Builders<BsonDocument>.Filter.Eq("_id", objectId);
-			await collection.ReplaceOneAsync(filter, getBsonDocument(obj));
-		}
-
-
-		public static async void DeleteObject(ObjectId objectId, string collectionName = "EXTRACTION", string connectionString = "mongodb://localhost:27017"
-			, string databaseName = "EASYBI")
-		{
-			// Create a MongoClient object by using the connection string
-			var client = new MongoClient(connectionString);
-
-			//Use the MongoClient to access the server
-			var database = client.GetDatabase(databaseName);
-
-			//get mongodb collection
-			var collection = database.GetCollection<BsonDocument>(collectionName);
-
-			await collection.DeleteOneAsync(
-							 Builders<BsonDocument>.Filter.Eq("_id", objectId));
-		}
+		
 		public static void DeleteFolders(List<int> Folders, List<Extraction> extractions)
 		{
 			foreach (int folder in Folders)
@@ -205,12 +112,10 @@ namespace EasyBI.DAL.OBJECTS
 		{		
 			foreach (Extraction extraction in extrations.Where(ext => ext.metadata.folder == Folder).ToList())
 			{
-				 DeleteObject(extraction._id);
+				DAL.DBOMongo.DeleteObject(extraction._id,Constantes.mongoExtractionCollection, Constantes.mongoConnectionString, Constantes.mongoDataBase);
 			}
 		}
-
-		// falta filtrar por usuario
-		public static List<Extraction> getAllDocuments(int user = 1)
+		public static List<Extraction> GetAllDocuments(int user = 1)
 		{
 			var conString = "mongodb://localhost:27017";
 			var Client = new MongoClient(conString);
@@ -264,9 +169,9 @@ namespace EasyBI.DAL.OBJECTS
 
 			return new Extraction();
 		}
-		public static bool uploadExtraction(Extraction extraction)
+		public static bool UploadExtraction(Extraction extraction)
 		{
-			InsertAsync(extraction);
+			DAL.DBOMongo.InsertAsync(extraction, Constantes.mongoExtractionCollection, Constantes.mongoConnectionString, Constantes.mongoDataBase);
 
 			return true;
 		}
@@ -276,7 +181,7 @@ namespace EasyBI.DAL.OBJECTS
 			metadata.createDate = DateTime.UtcNow;
 			metadata.modifiedDate = DateTime.UtcNow;
 			metadata.name = filename.Split('\\').LastOrDefault();
-			metadata.user = Users.getUserID(Environment.UserName);
+			metadata.user = Users.GetUserID(Environment.UserName);
 			metadata.folder = folder;
 
 			int count = 0;
@@ -331,7 +236,7 @@ namespace EasyBI.DAL.OBJECTS
 				Columns = columns
 			};
 
-			uploadExtraction(extraction);
+			UploadExtraction(extraction);
 
 			return extraction;
 
@@ -356,24 +261,6 @@ namespace EasyBI.DAL.OBJECTS
 				this.value = value;
 				this.length = length;
 			}
-		}
-
-		public static List<Field> getJSONSchema(JObject obj)
-		{
-			List<Field> fields = new List<Field>();
-
-
-			if (obj.Type.ToString() == "Object")
-			{
-
-			}
-
-			return fields;
-		}
-		private static Dictionary<string, string> getSchema()
-		{
-
-			return new Dictionary<string, string>();
 		}
 		public static Extraction GetExtractionXML(string filename, String delimiter, bool lineWithHeaders)
 		{

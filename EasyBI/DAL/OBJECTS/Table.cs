@@ -77,10 +77,12 @@ namespace EasyBI.DAL.OBJECTS
 				switch (column.inferedType)
 				{
 					case Column.Type.integer:
+						this.type = ColumnType.integer;
 						this.precision = null;
 						this.length = null;
 						break;
 					case Column.Type.numeric:
+						this.type = ColumnType.numeric;
 						this.precision = 2;
 						this.length = 10;
 						break;
@@ -155,8 +157,7 @@ namespace EasyBI.DAL.OBJECTS
 			dataTable.Columns.Add("Name", typeof(string));
 			dataTable.Columns.Add("Type", typeof(string));
 			dataTable.Columns.Add("Length", typeof(int));
-			if (!landing)
-				dataTable.Columns.Add("Precision", typeof(int));
+			dataTable.Columns.Add("Precision", typeof(int));
 			dataTable.Columns.Add("Nullable", typeof(bool));
 
 			foreach (TableColumn column in table.columns)
@@ -206,17 +207,17 @@ namespace EasyBI.DAL.OBJECTS
 
 		public static void InsertTable(Table table)
 		{
-			Extraction.InsertAsync(table, "TABLE");
+			DAL.DBOMongo.InsertAsync(table, Constantes.mongoTableCollection, Constantes.mongoConnectionString,Constantes.mongoDataBase);
 		}
 
 		public static void UpdateTable(Table table)
 		{
-			Extraction.UpdateObject(table._id, table, "TABLE");
+			DAL.DBOMongo.UpdateObject(table._id, table, Constantes.mongoTableCollection, Constantes.mongoConnectionString, Constantes.mongoDataBase);
 		}
 
 		public static void DeleteTable(Table table)
 		{
-			Extraction.DeleteObject(table._id, "TABLE");
+			DAL.DBOMongo.DeleteObject(table._id, Constantes.mongoTableCollection, Constantes.mongoConnectionString, Constantes.mongoDataBase);
 		}
 
 		public static DataGridView DataTableToGrid (TableType tableType = TableType.Dimension_fact)
@@ -390,6 +391,7 @@ namespace EasyBI.DAL.OBJECTS
 			if(tab != null)
 			{
 				table._id = tab._id;
+				metadata.createDate = tab.metadata.createDate;
 			}
 			else
 			{

@@ -50,7 +50,7 @@ namespace EasyBI.DAL.FORMS
 		private void loadParentFolder(int folder)
 		{
 			List<ComboBoxItem> items = new List<ComboBoxItem>();
-			Folders.getFolders().Where(item=> item.PARENT_ID != 0).ToList().ForEach(obj => items.Add(new ComboBoxItem(obj.NAME, obj.ID)));
+			Folders.GetFolders().Where(item=> item.PARENT_ID != 0).ToList().ForEach(obj => items.Add(new ComboBoxItem(obj.NAME, obj.ID)));
 			cmbFolder.Items.Clear();
 
 			cmbFolder.Items.AddRange(items.Cast<object>().ToArray());
@@ -90,10 +90,6 @@ namespace EasyBI.DAL.FORMS
 							fileType = Extraction.fileType.JSON;
 							break;
 
-						case "XML":
-							fileType = Extraction.fileType.XML;
-							break;
-
 						default:
 							fileType = Extraction.fileType.CSV;
 							break;
@@ -105,9 +101,6 @@ namespace EasyBI.DAL.FORMS
 					this.Close();
 				}
 			}
-           
-
-
         }
     }
 }
